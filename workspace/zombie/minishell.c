@@ -2,19 +2,51 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
 
 int main()
 {
     while(1)
     {   
     //1.等待标准输入
+    printf("[gwp@locasthost ~]$ ");
+    fflush(stdout);
     char buf[1024] = { 0 };
     fgets(buf, 1023, stdin);
     buf[strlen(buf) - 1] = '\0';
-    printf("buf[%s]\n", buf);
     //2.参数解析
     char* ptr = buf;
-    char* new_argv[32] = { 0};
+    int redirect_flag = 0;
+    char* redirect_file = NULL;
+    while(*ptr != '\0')
+    {
+        if(*ptr == '>')
+        {
+            redirect_flag = 1;
+            *ptr = '\0';
+            ptr++;
+            if(*ptr == '>')
+            {
+                redirect_flag = 2;
+                *ptr = '\0';
+                ptr++;
+            }
+        }
+        while(*ptr == ' ' && *ptr != '\0')
+        {
+            ptr++;
+        }
+        redirect_file = ptr;
+        while(*ptr == ' ' && *ptr != '\0')
+        {
+            ptr++;
+        }
+        *ptr = '\0';
+    }
+    ptr = buf;
+    char* new_argv[32] = { NULL };
     int new_argc = 0;
     while(*ptr != '\0')
     {
@@ -30,24 +62,43 @@ int main()
         }
         ptr++;
     }
-    int i = 0;
-    for(; i < new_argc; i++)
-    {
-        printf("new_argv[%d] = %s\n", i, new_argv[i]);
-    }
+    
     //3.创建一个子进程
     pid_t pid;
     pid = fork();
+    int fd = -1;
     if(pid == 0)
     {
     //4.在子进程中进行程序替换
+        if(redirect_flag == 1)
+        {
+            umask(0);
+            fd = open(redirect_file, O_WRONLY|O_CREAT|O_TRUNC, 0777);
+            if(fd < 0)
+            {
+                perror("open error");
+                return -1;
+            }
+            dup2(fd, 1);
+        }
+        else if(redirect_flag == 2)
+        {
+            umask(0);
+            fd = open(redirect_file, O_WRONLY|O_CREAT|O_APPEND, 0777);
+            if(fd < 0)
+            {
+                perror("open error");
+                return -1;
+            }
+            dup2(fd, 1);
+        }
         execvp(new_argv[0], new_argv);
-        perror("execvp error");//打印上一次系统调用接口使用的错误原因
+        perror("execvp error");
         exit(0);
     }
     //5.进程等待
     wait(NULL);
     }
-
+    
     return 0;
-    }
+}
