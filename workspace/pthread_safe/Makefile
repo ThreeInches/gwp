@@ -1,3 +1,5 @@
+RingQueue:RingQueue.cpp
+	g++ $^ -o $@ -lpthread
 producer_consumer:producer_consumer.cpp
 	g++ $^ -o $@ -lpthread
 cond2:cond2.c
