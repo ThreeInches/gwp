@@ -42,6 +42,13 @@ void non_compress()
     return;
 }
 
+void thr_http_server()
+{
+    CloudBackupSys::Server src;
+    src.Start();
+    return;
+}
+
 int main(int argc, char* argv[])
 {
     //datamanger_test();
@@ -55,8 +62,10 @@ int main(int argc, char* argv[])
     {
         boost::filesystem::create_directory(BACKUP_DIR);
     }
-    CloudBackupSys::data_manager.Insert("1.c.gz", "1.c.gz");
-    thread thr(non_compress);
-    thr.join();
+    thread thr_compress(non_compress);
+    thread thr_server(thr_http_server);
+
+    thr_compress.join();
+    thr_server.join();
     return 0;
 }

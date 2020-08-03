@@ -209,6 +209,17 @@ namespace CloudBackupSys
             pthread_rwlock_unlock(&m_rwlock);
             return true;
         }
+        //根据源文件名称获取压缩包名称
+        bool GetGzName(const string& src, string* dst)
+        {
+            auto it = m_file_list.find(src);
+            if(it == m_file_list.end())
+            {
+                return false;
+            }
+            *dst = it->second;
+            return true;
+        }
         //数据改变后持续化存储
         bool Storage()
         {
@@ -318,22 +329,80 @@ namespace CloudBackupSys
         string m_bu_dir;//压缩前文件所在路径
         string m_gz_dir;//压缩文件的存储路径
     };
-/*
+
     class Server
     {
+    public:
         //启动网络通信模块
-        bool Start();
+        bool Start()
+        {
+            m_server.Put("/upload", FileUpload);
+            m_server.Get("/list", FileList);
+            //正则表达式：.*匹配任意字符串 ()捕捉这个字符串
+            m_server.Get("/download/(.*)", FileDownload);
+
+            m_server.listen("0.0.0.0", 9000);
+            return true;
+        }
     private:
         //文件上传处理回调函数
-        static void FileUpLoad(const httplib::Request& req, httplib::Response& resp);
+        //set_content(正文数据， 正文数据长度， 正文类型(Content-Type))
+        static void FileUpload(const httplib::Request& req, httplib::Response& rsp)
+        {
+            string filename = req.matches[1];//捕捉到的文件名称
+            string pathname = BACKUP_DIR + filename;//文件路径
+            FileUtil::Write(pathname, req.body);//向文件写入数据，文件不存在则会创建
+            data_manager.Insert(filename, filename);
+            rsp.status = 200;
+            return;
+        }
         //文件列表处理回调函数
-        static void List(const httplib::Request& req, httplib::Response& resp);
+        static void FileList(const httplib::Request& req, httplib::Response& rsp)
+        {
+            vector<string> list;
+            data_manager.GetAllName(&list);
+            stringstream tmp;
+            tmp << "<html><body><hr />";
+            for(size_t i = 0; i < list.size(); i++)
+            {
+                tmp << "<a href='/download" << list[i] << "'>" << list[i] << "</a>";
+                tmp << "<hr />";
+            }
+            tmp << "<hr /></body><html>";
+            rsp.set_content(tmp.str().c_str(), tmp.str().size(), "text/html");
+            rsp.status = 200;
+            return;
+        }
         //文件下载处理回调函数
-        static void Download(const httplib::Request& req, httplib::Response& resp);
+        static void FileDownload(const httplib::Request& req, httplib::Response& rsp)
+        {
+            //判断文件是否存在
+            string filename = req.matches[1];
+            if(data_manager.Exists(filename) == false)
+            {
+                rsp.status = 404;
+                return;
+            }
+            //判断文件是否已经压缩
+            string pathname = BACKUP_DIR + filename;
+            if(data_manager.IsCompressed(filename))
+            {
+                //解压文件
+               string gzfile;
+               data_manager.GetGzName(filename, &gzfile);
+               string gzpathname = GZFILE_DIR + gzfile;//压缩包路径
+               CompressUtil::UnCompress(gzpathname, pathname);
+               unlink(gzpathname.c_str());//删除压缩包
+               data_manager.Insert(filename, filename);
+            }
+            FileUtil::Read(pathname, &rsp.body);
+            rsp.set_header("Content-Type", "application/ocet-stream");//二进制流下载
+            rsp.status = 200;
+            return;
+        }
     private:
         string m_file_dir;
         httplib::Server m_server; 
     };
-*/
 }
 
