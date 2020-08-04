@@ -51,6 +51,7 @@ void thr_http_server()
 
 int main(int argc, char* argv[])
 {
+    //compress_test(argv);
     //datamanger_test();
     //判断文件备份路径是否存在  不存在则创建
     if(boost::filesystem::exists(GZFILE_DIR) == false)

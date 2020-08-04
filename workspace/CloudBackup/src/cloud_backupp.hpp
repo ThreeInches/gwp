@@ -16,10 +16,9 @@
 #define INTERVAL_TIME 30//检测间隔时间
 #define BACKUP_DIR "./backup/"//文件的备份路径
 #define GZFILE_DIR "./gzfile/"//压缩包的存储路径
-#define DATA_FILE "./list.backup/"//数据管理模块的数据备份文件名称
+#define DATA_FILE "./list.backup"//数据管理模块的数据备份文件名称
 
 using namespace std;
-using namespace httplib;
 
 namespace CloudBackupSys
 {
@@ -294,7 +293,7 @@ namespace CloudBackupSys
                         string src_name = m_bu_dir + s_name;
                         string dst_name = m_gz_dir + d_name;
                         //对非热点文件进行压缩
-                        if(CompressUtil::Compress(src_name, dst_name))
+                        if(CompressUtil::Compress(src_name, dst_name) == true)
                         {
                             //更新文件，并删除原文件
                             data_manager.Insert(s_name, d_name);
@@ -314,7 +313,7 @@ namespace CloudBackupSys
             struct stat st;
             if(stat(name.c_str(), &st) < 0)
             {
-                cout << "get file" << name << "stat failed!" << endl;
+                cout << "get file " << name << " stat failed!" << endl;
                 return false;
             }
             if((cur_t - st.st_atime) > NONHOT_TIME)
@@ -336,7 +335,7 @@ namespace CloudBackupSys
         //启动网络通信模块
         bool Start()
         {
-            m_server.Put("/upload", FileUpload);
+            m_server.Put("/(.*)", FileUpload);
             m_server.Get("/list", FileList);
             //正则表达式：.*匹配任意字符串 ()捕捉这个字符串
             m_server.Get("/download/(.*)", FileDownload);
@@ -365,10 +364,10 @@ namespace CloudBackupSys
             tmp << "<html><body><hr />";
             for(size_t i = 0; i < list.size(); i++)
             {
-                tmp << "<a href='/download" << list[i] << "'>" << list[i] << "</a>";
+                tmp << "<a href='/download/" << list[i] << "'>" << list[i] << "</a>";
                 tmp << "<hr />";
             }
-            tmp << "<hr /></body><html>";
+            tmp << "</body><html>";
             rsp.set_content(tmp.str().c_str(), tmp.str().size(), "text/html");
             rsp.status = 200;
             return;
@@ -385,7 +384,7 @@ namespace CloudBackupSys
             }
             //判断文件是否已经压缩
             string pathname = BACKUP_DIR + filename;
-            if(data_manager.IsCompressed(filename))
+            if(data_manager.IsCompressed(filename) == true)
             {
                 //解压文件
                string gzfile;
@@ -396,7 +395,7 @@ namespace CloudBackupSys
                data_manager.Insert(filename, filename);
             }
             FileUtil::Read(pathname, &rsp.body);
-            rsp.set_header("Content-Type", "application/ocet-stream");//二进制流下载
+            rsp.set_header("Content-Type", "application/octet-stream");//二进制流下载
             rsp.status = 200;
             return;
         }
