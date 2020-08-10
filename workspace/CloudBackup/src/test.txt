@@ -1,4 +1,0 @@
-a.txt a.txt.gz
-b.txt b.txt.gz
-c.txt c.txt
-d.txt d.txt.gz

@@ -264,6 +264,7 @@ namespace CloudBackupSys
         pthread_rwlock_t m_rwlock;
     };
 
+    //非热点文件压缩模块
     DataManager data_manager(DATA_FILE);
     class NonHotCompress
     {
