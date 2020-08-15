@@ -1,3 +1,9 @@
+env2:env2.c
+	gcc $^ -o $@
+env1:env1.c
+	gcc $^ -o $@
+env:env.c
+	gcc $^ -o $@
 hello:hello.o
 	gcc hello.o -o hello
 hello.o:hello.s
