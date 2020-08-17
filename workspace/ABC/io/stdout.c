@@ -9,5 +9,7 @@ int main()
     fwrite(msg, strlen(msg), 1, stdout);
     printf("Hello,world!\n");
     fprintf(stdout, "Hello,world!\n");
+    
+    fork();
     return 0;
 }
