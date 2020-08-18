@@ -1,3 +1,5 @@
+exec:exec.c
+	gcc $^ -o $@
 wait2:wait2.c
 	gcc $^ -o $@
 wait1:wait1.c
