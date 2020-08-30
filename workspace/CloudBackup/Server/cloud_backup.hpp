@@ -421,7 +421,7 @@ private:
             return;
         }
         std::string pathname = BACKUP_DIR + filename;
-        if(data_manager.IsCompress(filename) == false)
+        if(data_manager.IsCompress(filename) == true)
         {
             std::string gzfile;
             data_manager.GetGzName(filename, &gzfile);
