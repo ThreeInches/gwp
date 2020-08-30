@@ -1,0 +1,7 @@
+f.txt f.txt.gz
+g.txt g.txt
+e.txt d.txt
+a.txt a.txt
+b.txt e.txt.gz
+c.txt b.txt
+d.txt c.txt.gz
